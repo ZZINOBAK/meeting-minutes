@@ -1,4 +1,4 @@
-# 📝 회의록 관리 시스템 (Meeting Minutes Management)
+# 📝 회의록 (Meeting Minutes)
 
 **Spring Boot 기반 회의록 관리 웹 애플리케이션**입니다.  
 Nginx, Spring Boot, MariaDB를 도커 컨테이너로 구성하여 어디서든 일관된 환경으로 실행할 수 있도록 설계했습니다.
@@ -44,9 +44,9 @@ docker-compose up -d
 
 | 구분 | 기술 |
 | :--- | :--- |
-| **Backend** | Java 17, Spring Boot 3.x, MyBatis |
+| **Backend** | Java 21, Spring Boot 4.0.5, MyBatis |
 | **Database** | MariaDB 11 |
-| **Frontend** | Thymeleaf, Vanilla JS, CSS3 |
+| **Frontend** | HTML5, Thymeleaf, JS, CSS3, jQuery |
 | **DevOps** | Docker, Docker Compose, Nginx |
 
 ---
