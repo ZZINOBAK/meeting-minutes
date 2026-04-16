@@ -1,0 +1,18 @@
+spring:
+  datasource:
+    # 도커 네트워크 안에서의 DB 주소와 포트
+    url: jdbc:mariadb://meeting-db:3306/meeting_db
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD} # 배포 시에는 반드시 외부에서 주입받음
+    driver-class-name: org.mariadb.jdbc.Driver
+
+  sql:
+    init:
+      mode: always
+
+logging:
+  level:
+    com.task.meeting.repository: info
+
+api:
+  secret-key: ${API_SECRET_KEY}

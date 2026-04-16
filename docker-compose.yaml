@@ -1,0 +1,33 @@
+services:
+  # 데이터베이스
+  meeting-db:
+    image: mariadb:11
+    environment:
+      # 루트 비밀번호와 사용자 비밀번호도 변수 처리하여 깃 노출 방지
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MARIADB_DATABASE: meeting_db
+      MARIADB_USER: ${DB_USERNAME}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+
+  # 스프링부트
+  meeting-app:
+    build: .
+    depends_on:
+      - meeting-db
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      # DB 주소를 명시적으로 주입해주면 더 확실합니다.
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://meeting-db:3306/meeting_db
+      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - API_SECRET_KEY=${API_SECRET_KEY}
+
+  # Nginx
+  meeting-proxy:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - meeting-app

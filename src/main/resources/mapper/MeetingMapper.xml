@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.task.meeting.repository.MeetingMapper">
+
+    <insert id="insertMeeting" useGeneratedKeys="true" keyProperty="meetingId">
+        INSERT INTO T_MEETING (title, meeting_date, location, empino, empinm, content)
+        VALUES (#{title}, #{meetingDate}, #{location}, #{empino}, #{empinm}, #{content})
+    </insert>
+
+
+<!--    <select id="findAllMeetings" resultType="com.task.meeting.entity.Meeting">-->
+<!--        SELECT-->
+<!--        meeting_id, title, meeting_date, location, empino, empinm, content, created_at-->
+<!--        FROM T_MEETING-->
+<!--        ORDER BY meeting_date DESC, created_at DESC-->
+<!--    </select>-->
+
+    <select id="findAllMeetings" resultType="com.task.meeting.entity.Meeting">
+        SELECT * FROM T_MEETING
+        <where>
+            delete_at IS NULL
+            <if test="keyword != null and keyword != ''">
+                <choose>
+                    <when test="type == 'T'.toString()">
+                        AND title LIKE CONCAT('%', #{keyword}, '%')
+                    </when>
+                    <when test="type == 'C'.toString()">
+                        AND content LIKE CONCAT('%', #{keyword}, '%')
+                    </when>
+                    <when test="type == 'TC'.toString()">
+                        AND (title LIKE CONCAT('%', #{keyword}, '%') OR content LIKE CONCAT('%', #{keyword}, '%'))
+                    </when>
+                </choose>
+            </if>
+        </where>
+        ORDER BY meeting_date DESC, created_at DESC
+        LIMIT #{skip}, #{amount}
+    </select>
+
+    <select id="getTotalCount" resultType="int">
+        SELECT COUNT(*) FROM T_MEETING
+        <where>
+            delete_at IS NULL
+            <if test="keyword != null and keyword != ''">
+                <choose>
+                    <when test="type == 'T'.toString()">
+                        AND title LIKE CONCAT('%', #{keyword}, '%')
+                    </when>
+                    <when test="type == 'C'.toString()">
+                        AND content LIKE CONCAT('%', #{keyword}, '%')
+                    </when>
+                    <when test="type == 'TC'.toString()">
+                        AND (title LIKE CONCAT('%', #{keyword}, '%') OR content LIKE CONCAT('%', #{keyword}, '%'))
+                    </when>
+                </choose>
+            </if>
+        </where>
+    </select>
+
+    <resultMap id="meetingDetailMap" type="com.task.meeting.entity.Meeting" autoMapping="true">
+        <id property="meetingId" column="meeting_id"/>
+        <association property="attachment" javaType="com.task.meeting.entity.Attachment">
+            <id property="attachmentId" column="attachment_id"/>
+            <result property="originalName" column="original_name"/>
+            <result property="storedName" column="stored_name"/>
+            <result property="filePath" column="file_path"/>
+        </association>
+        <collection property="attendees" ofType="com.task.meeting.entity.Attendee" autoMapping="true">
+            <id property="empino" column="att_empino"/>
+            <result property="empinm" column="att_empinm"/>
+            <result property="dept" column="att_dept"/>
+            <result property="position" column="att_position"/>
+        </collection>
+    </resultMap>
+
+    <select id="findById" resultMap="meetingDetailMap">
+        SELECT
+        m.*,
+        a.attachment_id, a.original_name, a.stored_name, a.file_path,
+        att.empino AS att_empino,
+        e.empinm AS att_empinm,
+        e.dept AS att_dept,
+        e.position AS att_position
+        FROM T_MEETING m
+        LEFT JOIN T_ATTACHMENT a ON m.meeting_id = a.meeting_id
+        LEFT JOIN T_MEETING_ATTENDEES att ON m.meeting_id = att.meeting_id
+        LEFT JOIN T_EMPLOYEES e ON att.empino = e.empino
+        WHERE m.meeting_id = #{id}
+        AND m.delete_at IS NULL
+    </select>
+
+    <update id="update">
+        UPDATE T_MEETING
+        SET title = #{title},
+        content = #{content},
+        location = #{location},
+        meeting_date = #{meetingDate},
+        empinm = #{empinm},  empino = #{empino},  updated_at = NOW()
+        WHERE meeting_id = #{meetingId}
+    </update>
+
+    <update id="delete">
+        UPDATE T_MEETING
+        SET
+        delete_at = NOW()   WHERE meeting_id = #{id}
+    </update>
+</mapper>

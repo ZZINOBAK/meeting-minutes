@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>회의록 관리 시스템</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        .container { width: 900px; margin: 30px auto; font-family: sans-serif; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        th { background-color: #f4f4f4; }
+        .btn { padding: 8px 15px; text-decoration: none; border-radius: 4px; display: inline-block; }
+        .btn-add { background-color: #007bff; color: white; }
+        .btn-view { background-color: #6c757d; color: white; font-size: 12px; }
+        .no-data { text-align: center; padding: 50px; color: #888; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h2 style="cursor: pointer;">
+            <a th:href="@{/meeting/}" style="text-decoration: none; color: inherit;">
+                📋 회의록 목록
+            </a>
+        </h2>
+        <a th:href="@{/meeting/register}" class="btn btn-add">+ 새 회의록 등록</a>
+    </div>
+
+    <table>
+        <thead>
+        <tr>
+            <th>번호</th>
+            <th>회의 제목</th>
+            <th>작성자(사번)</th>
+            <th>회의 일시</th>
+            <th>등록일</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="meeting, iterStat : ${meetings}">
+            <td th:text="${(pageMaker.cri.page - 1) * pageMaker.cri.amount + iterStat.count}">1</td>
+            <td>
+                <a th:href="@{/meeting/detail-json/{id}(id=${meeting.meetingId})}"
+                   th:text="${meeting.title}" style="font-weight: bold; color: #333;">제목</a>
+<!--                <a th:href="@{/meeting/detail/{id}(id=${meeting.meetingId})}"-->
+<!--                   th:text="${meeting.title}" style="font-weight: bold; color: #333;">제목</a>-->
+            </td>
+            <td th:text="${meeting.empinm + '(' + meeting.empino + ')'}">홍길동(2024001)</td>
+            <td th:text="${#temporals.format(meeting.meetingDate, 'yyyy-MM-dd HH:mm')}">2026-04-13 14:00</td>
+            <td th:text="${#temporals.format(meeting.createdAt, 'yyyy-MM-dd')}">2026-04-13</td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(meetings)}">
+            <td colspan="6" class="no-data">등록된 회의록이 없습니다. 첫 회의록을 등록해보세요!</td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+<div class="search-wrap" style="text-align: center; margin-bottom: 20px;">
+    <form action="/meeting/" method="get">
+        <select name="type">
+            <option value="T" th:selected="${pageMaker.cri.type == 'T'}">제목</option>
+            <option value="C" th:selected="${pageMaker.cri.type == 'C'}">내용</option>
+            <option value="TC" th:selected="${pageMaker.cri.type == 'TC'}">제목+내용</option>
+        </select>
+        <input type="text" name="keyword" th:value="${pageMaker.cri.keyword}" placeholder="검색어를 입력하세요">
+        <button type="submit" class="btn-search">검색</button>
+    </form>
+</div>
+<div class="pagination">
+    <a th:if="${pageMaker.prev}"
+       th:href="@{/meeting/(page=${pageMaker.startPage - 1},
+       type=${pageMaker.cri.type}, keyword=${pageMaker.cri.keyword})}">이전</a>
+
+    <th:block th:each="num : ${#numbers.sequence(pageMaker.startPage, pageMaker.endPage)}">
+        <a th:href="@{/meeting/(page=${num}, type=${pageMaker.cri.type}, keyword=${pageMaker.cri.keyword})}"
+           th:text="${num}"
+           th:style="${pageMaker.cri.page == num} ? 'font-weight: bold; color: red;' : ''"
+           th:class="${pageMaker.cri.page == num} ? 'active' : ''"></a>
+    </th:block>
+
+    <a th:if="${pageMaker.next}"
+       th:href="@{/meeting/(page=${pageMaker.endPage + 1},
+       type=${pageMaker.cri.type}, keyword=${pageMaker.cri.keyword})}">다음</a>
+</div>
+
+</body>
+
+</html>

@@ -1,0 +1,22 @@
+# Build results
+build/
+out/
+bin/
+
+# Gradle/Maven
+.gradle/
+.mvn/
+
+# IDE settings
+.idea/
+*.iml
+.vscode/
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Database & Sensitive info
+*.env
+src/main/resources/application-local.yaml
+uploads/

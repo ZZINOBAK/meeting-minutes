@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>회의록 상세 (JSON 버전)</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        /* 기존 스타일 그대로 유지 */
+        .container {
+            width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            font-family: sans-serif;
+        }
+
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        .info-table th {
+            background: #f4f4f4;
+            width: 150px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+
+        .info-table td {
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+
+        .content-box {
+            min-height: 300px;
+            padding: 15px;
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .file-box {
+            padding: 10px;
+            border: 1px solid #e9e9e9;
+            background: #fff;
+            margin-bottom: 20px;
+        }
+
+        .btn-group {
+            text-align: right;
+        }
+
+        .btn {
+            padding: 8px 15px;
+            text-decoration: none;
+            border-radius: 4px;
+            color: white;
+            background: #333;
+            font-size: 14px;
+            cursor: pointer;
+            border: none;
+            display: inline-block;
+        }
+
+        .edit-mode {
+            display: none;
+        }
+
+        input[type="text"],
+        textarea,
+        input[type="datetime-local"] {
+            width: 100%;
+            padding: 5px;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h2>📋 회의록 상세 정보 (JSON 로딩)</h2>
+
+        <form id="updateForm" action="/meeting/update" method="post" enctype="multipart/form-data">
+            <input type="hidden" name="meetingId" id="meetingIdInput">
+
+            <table class="info-table">
+                <tr>
+                    <th>제목</th>
+                    <td colspan="3">
+                        <span id="viewTitle" class="view-mode" style="font-weight: bold;"></span>
+                        <input type="text" id="editTitle" name="title" class="edit-mode">
+                    </td>
+                </tr>
+                <tr>
+                    <th>작성자</th>
+                    <td>
+                        <span id="viewAuthor" class="view-mode"></span>
+                        <div class="edit-mode">
+                            <input type="text" id="editEmpinm" name="empinm" style="width: 45%;">
+                            <input type="text" id="editEmpino" name="empino" style="width: 45%;">
+                        </div>
+                    </td>
+                    <th>회의 일시</th>
+                    <td>
+                        <span id="viewDate" class="view-mode"></span>
+                        <input type="datetime-local" id="editDate" name="meetingDate" class="edit-mode">
+                    </td>
+                </tr>
+                <tr>
+                    <th>장소</th>
+                    <td colspan="3">
+                        <span id="viewLocation" class="view-mode"></span>
+                        <input type="text" id="editLocation" name="location" class="edit-mode">
+                    </td>
+                </tr>
+                <tr>
+                    <th>참석자 명단</th>
+                    <td colspan="3">
+                        <div id="viewAttendees" class="view-mode">
+                        </div>
+                        <div class="edit-mode">
+                            <div style="margin-bottom: 10px;">
+                                <button type="button" id="btnOpenModal" class="btn"
+                                    style="background: #17a2b8; font-size: 12px;">참석자 추가</button>
+                            </div>
+                            <div id="editAttendeeList" class="attendee-list"
+                                style="border: 1px solid #ddd; padding: 10px; min-height: 40px; background: #fff;">
+                            </div>
+                            <p style="font-size: 11px; color: #666; margin-top: 5px;">* 'X'를 누르면 목록에서 제외됩니다. 최종 저장 시
+                                반영됩니다.</p>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+
+            <div class="content-box">
+                <div id="viewContent" class="view-mode"></div>
+                <textarea id="editContent" name="content" class="edit-mode" style="min-height: 300px;"></textarea>
+            </div>
+
+            <div class="file-box">
+                <strong>📎 첨부파일:</strong>
+                <span class="view-mode" id="viewFileArea">
+                </span>
+                <div class="edit-mode">
+                    <div id="oldFileArea" style="display:none;">
+                        <span id="oldFileName"></span>
+                        <input type="checkbox" name="deleteFile" id="deleteFileCheck" value="Y" style="display:none;">
+                        <button type="button" class="btn"
+                            style="background: #dc3545; font-size: 11px; margin-left: 10px;"
+                            onclick="confirmDeleteFile()">삭제</button>
+                    </div>
+                    <div id="newFileArea" style="margin-top: 5px;">
+                        <input type="file" name="newFile" accept="application/pdf">
+                        <p style="font-size: 11px; color: #666;">* PDF 파일만 업로드 가능합니다.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <a href="/meeting/" class="btn view-mode">목록으로</a>
+                <button type="button" class="btn view-mode" onclick="toggleEdit(true)"
+                    style="background: #007bff;">수정</button>
+                <button type="button" class="btn view-mode" onclick="confirmDelete()"
+                    style="background: #222222;">삭제</button>
+                <button type="submit" class="btn edit-mode" style="background: #28a745;">저장</button>
+                <button type="button" class="btn edit-mode" onclick="toggleEdit(false)"
+                    style="background: #6c757d;">취소</button>
+            </div>
+        </form>
+    </div>
+
+    <div id="employeeModal" class="modal"
+        style="display:none; position:fixed; z-index:100; left:0; top:0; width:100%; height:100%; background-color: rgba(0,0,0,0.5);">
+        <div class="modal-content"
+            style="background-color:#fff; margin:10% auto; padding:20px; border-radius:8px; width:500px; max-height:80vh; overflow-y:auto;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <h3>참석자 추가</h3>
+                <span id="btnCloseModal" style="cursor:pointer; font-size:24px;">&times;</span>
+            </div>
+
+            <div style="display:flex; gap:10px; margin-bottom:15px;">
+                <input type="text" id="modalSearchInput" placeholder="이름을 입력하세요" style="flex:1; padding:8px;">
+                <button type="button" id="btnModalSearch"
+                    style="padding:8px 15px; background:#4A90E2; color:white; border:none; border-radius:4px;">검색</button>
+            </div>
+
+            <div id="modalSearchResult"
+                style="border:1px solid #ddd; min-height:150px; padding:10px; margin-bottom:15px;">
+                <p style="color:#999; text-align:center;">이름을 검색해 주세요.</p>
+            </div>
+
+            <button type="button" id="btnAddSelected"
+                style="width:100%; padding:10px; background:#27ae60; color:white; border:none; border-radius:4px;">선택
+                완료</button>
+        </div>
+    </div>
+
+
+    <script>
+        $(document).ready(function () {
+            // 1. 페이지 로드 시 데이터 가져오기
+            // URL에서 ID 추출 (예: /meeting/detail-json/49)
+            const pathArray = window.location.pathname.split('/');
+            const id = pathArray[pathArray.length - 1];
+
+            if (!id) {
+                alert("ID가 올바르지 않습니다.");
+                return;
+            }
+
+            $.ajax({
+                url: `/api/meeting/detail/${id}`, // API 주소 확인 필요
+                type: 'GET',
+                dataType: 'json',
+                success: function (data) {
+                    renderData(data);
+                },
+                error: function () {
+                    alert("데이터를 불러오는데 실패했습니다.");
+                }
+            });
+        });
+
+        // 2. 데이터를 화면에 뿌려주는 함수
+        function renderData(meeting) {
+            // ID 및 기본 텍스트 세팅
+            $('#meetingIdInput').val(meeting.meetingId);
+            $('#viewTitle').text(meeting.title);
+            $('#editTitle').val(meeting.title);
+
+            // 작성자
+            $('#viewAuthor').text(`${meeting.empinm} (${meeting.empino})`);
+            $('#editEmpinm').val(meeting.empinm);
+            $('#editEmpino').val(meeting.empino);
+
+            // 날짜 포맷팅
+            const dateRaw = meeting.meetingDate || '';
+            $('#viewDate').text(dateRaw.replace('T', ' '));
+            $('#editDate').val(dateRaw);
+
+            // 장소
+            $('#viewLocation').text(meeting.location || '정보 없음');
+            $('#editLocation').val(meeting.location || '');
+
+            // 내용 (줄바꿈 처리)
+            const contentHtml = meeting.content ? meeting.content.replace(/\n/g, '<br>') : '';
+            $('#viewContent').html(contentHtml);
+            $('#editContent').val(meeting.content);
+
+            // 파일 처리
+            const $fileArea = $('#viewFileArea');
+            if (meeting.attachment) {
+                $fileArea.html(`
+                <span>${meeting.attachment.originalName}</span>
+                <a href="/file/download/${meeting.attachment.attachmentId}" 
+                   class="btn" style="background: #28a745; font-size: 11px;">다운로드</a>
+            `);
+                $('#oldFileArea').show();
+                $('#oldFileName').text(`기존 파일: ${meeting.attachment.originalName}`);
+            } else {
+                $fileArea.text('첨부파일 없음');
+                $('#oldFileArea').hide();
+            }
+
+            // 참석자 목록
+            const $viewArea = $('#viewAttendees');
+            const $editArea = $('#editAttendeeList');
+
+            $viewArea.empty();
+            $editArea.empty();
+
+            if (meeting.attendees && meeting.attendees.length > 0) {
+                meeting.attendees.forEach(function (att) {
+                    if (att.empinm) {
+                        // [A] 조회 모드용: 단순 텍스트 태그
+                        const viewTag = `
+                <span style="display:inline-block; background:#f0f0f0; padding:2px 8px; margin:2px; border-radius:15px; font-size:13px; border:1px solid #ccc;">
+                    ${att.empinm} (${att.dept}/${att.position})
+                </span>`;
+                        $viewArea.append(viewTag);
+
+                        // [B] 수정 모드용: 삭제 버튼과 Hidden Input이 포함된 태그
+                        const editTag = `
+                <div class="attendee-tag" data-id="${att.empino}" style="display:inline-block; background:#eef; padding:5px; margin:5px; border-radius:5px; border:1px solid #ddd;">
+                    <span>${att.empinm} (${att.dept}/${att.position})</span>
+                    <input type="hidden" name="attendeeIds" value="${att.empino}">
+                    <span class="remove-btn" onclick="$(this).parent().remove()" style="cursor:pointer; color:red; margin-left:8px; font-weight:bold;">&times;</span>
+                </div>`;
+                        $editArea.append(editTag);
+                    }
+                });
+            } else {
+                $viewArea.text('참석자 없음');
+                $editArea.html('<p class="empty-msg" style="color:#999;">선택된 참석자가 없습니다.</p>');
+            }
+        }
+
+        // --- 버튼 제어 함수들 ---
+
+        function toggleEdit(isEdit) {
+            if (isEdit) {
+                $('.view-mode').hide();
+                $('.edit-mode').css('display', 'inline-block');
+                $('#editContent').show(); // 텍스트에리어는 block 성격
+            } else {
+                $('.view-mode').css('display', 'inline-block');
+                $('.edit-mode').hide();
+            }
+        }
+
+        function confirmDeleteFile() {
+            if (confirm("이 파일을 삭제하시겠습니까?")) {
+                $('#deleteFileCheck').prop('checked', true);
+                $('#oldFileArea').hide();
+            }
+        }
+
+        function confirmDelete() {
+            if (confirm("정말로 이 회의록을 삭제하시겠습니까?")) {
+                const id = $('#meetingIdInput').val();
+                location.href = "/meeting/delete/" + id;
+            }
+        }
+    </script>
+    <script src="/js/attendee-modal.js"></script>
+
+</body>
+
+</html>

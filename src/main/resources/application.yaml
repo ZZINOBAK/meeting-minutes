@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: meeting-minutes # 이름 변경 반영
+
+  profiles:
+    active: local # 기본값은 로컬로 설정
+
+  servlet:
+    multipart:
+      max-file-size: 10MB
+
+
+mybatis:
+  mapper-locations: classpath*:/mapper/*.xml
+  type-aliases-package: com.task.meeting.entity
+  configuration:
+    map-underscore-to-camel-case: true
+
+file:
+  upload-dir: uploads/
+
+server:
+  port: 8080
+  error:
+    path: /error

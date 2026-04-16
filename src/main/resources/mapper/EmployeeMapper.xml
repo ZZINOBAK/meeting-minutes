@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.task.meeting.repository.EmployeeMapper">
+
+    <select id="searchEmployees" resultType="com.task.meeting.entity.Employee">
+        SELECT
+        empino,
+        empinm,
+        dept,
+        position
+        FROM T_EMPLOYEES
+        WHERE empinm LIKE CONCAT('%', #{keyword}, '%')
+        ORDER BY empinm ASC
+    </select>
+</mapper>
