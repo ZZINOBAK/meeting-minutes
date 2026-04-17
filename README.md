@@ -26,10 +26,17 @@ cp .env.example .env
 생성된 `.env` 파일 내의 비밀번호(DB_PASSWORD 등)를 환경에 맞게 수정하세요.
 
 ### 3. 도커 컴포즈 실행
-아래 명령어를 입력하면 DB 준비가 완료된 후 애플리케이션이 자동으로 실행됩니다.
+Docker Compose를 사용하여 데이터베이스와 애플리케이션을 한 번에 실행합니다.
+
+**처음 실행하거나 수정 사항을 반영할 때:**
 
 ```bash
-docker-compose up -d meeting-db
+docker-compose up -d --build
+```
+
+**이미 빌드된 이미지를 단순히 실행만 할 때:**
+
+```bash
 docker-compose up -d
 ```
 
